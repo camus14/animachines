@@ -1,3 +1,5 @@
+local satiation = 0
+
 minetest.register_craftitem("animachines:leather", {
 	description = "Leather",
 	inventory_image = "animachines_leather.png",
@@ -76,12 +78,13 @@ minetest.register_node("animachines:cow", {
 
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
-		meta:set_string("formspec", cow_formspec(item_percent))
+		meta:set_string("formspec", cow_formspec(satiation))
 		local inv = meta:get_inventory()
 		inv:set_size('inp', 1)
 		inv:set_size('hdd', 1)
 		inv:set_size('outp', 1)
 	end,
+
 	allow_metadata_inventory_put = allow_metadata_inventory_put,
 	allow_metadata_inventory_move = allow_metadata_inventory_move,
 	allow_metadata_inventory_take = allow_metadata_inventory_take,
@@ -94,6 +97,7 @@ minetest.register_node("animachines:cow", {
 		local hddlist = inv:get_list("hdd")
 		local outplist = inv:get_list("outp")
 		local xy = 10 - hddlist[1]:get_count()
+		local formspec
 		if hddlist[1]:get_count() >= 10 then
 			if stack:get_name() == "farming:wheat" then
 				inv:add_item("outp", {name="animachines:raw_beef", count=1, wear=0, metadata=""})
@@ -101,6 +105,9 @@ minetest.register_node("animachines:cow", {
 				hddlist[1]:take_item(10)
 				inv:set_stack("inp", 1, inplist[1])
 				inv:set_stack("hdd", 1, hddlist[1])
+				satiation = 0
+				formspec = cow_formspec(satiation)
+				meta:set_string("formspec", formspec)
 			end
 			if stack:get_name() == "default:junglegrass" then
 				inv:add_item("outp", {name="animachines:leather", count=1, wear=0, metadata=""})
@@ -108,6 +115,9 @@ minetest.register_node("animachines:cow", {
 				hddlist[1]:take_item(10)
 				inv:set_stack("inp", 1, inplist[1])
 				inv:set_stack("hdd", 1, hddlist[1])
+				satiation = 0
+				formspec = cow_formspec(satiation)
+				meta:set_string("formspec", formspec)
 			end
 		else
 			if stack:get_name() == "default:grass_1" then
@@ -115,23 +125,31 @@ minetest.register_node("animachines:cow", {
 					inv:add_item("hdd", {name="default:grass_1", count=xy, wear=1, metadata=""})
 					inplist[1]:take_item(xy)
 					inv:set_stack("inp", 1, inplist[1])
+					satiation = 100
+					formspec = cow_formspec(satiation)
+					meta:set_string("formspec", formspec)
 				else
 					inv:add_item("hdd", {name="default:grass_1", count=stack:get_count(), wear=1, metadata=""})
 					inplist[1]:clear()
 					inv:set_stack("inp", 1, inplist[1])
+					satiation = (stack:get_count() + hddlist[1]:get_count()) * 10
+					formspec = cow_formspec(satiation)
+					meta:set_string("formspec", formspec)
 				end
 			end
 		end
+
 	end,
 
 })
 
 -- Formspect
 
-function cow_formspec(item_percent)
+function cow_formspec(satiation)
 	return "size[8,6.5]"..
 		"list[context;inp;2.00,0.5;1,1;]"..
-		"image[3.50,0.5;1,1;gui_furnace_arrow_bg.png^[transformR270]"..
+		"image[3.50,0.5;1,1;gui_furnace_arrow_bg.png^[lowpart:"..
+		(satiation)..":gui_furnace_arrow_fg.png^[transformR270]"..
 		"list[context;outp;5.00,0.5;1,1;]"..
 		"list[current_player;main;0,2.25;8,1;]"..
 		"list[current_player;main;0,3.5;8,3;8]"..
